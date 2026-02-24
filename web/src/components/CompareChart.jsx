@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LabelList } from "recharts";
 
 /** Module 비교용 대표행 추출 (Streamlit 로직 반영) */
@@ -46,7 +46,6 @@ function buildCompare(rows, state) {
     pool = pickRepresentativeRowsForModule(pool, detail, new Set(["중국", "한국"]));
   } else {
     // 일반 케이스: 세부/재질 필터(필요 시)
-    // requireDetail: 현재 선택 조합에 실 데이터 세부 후보가 있으면 필수, 필터링
     const detailCandidates = Array.from(new Set(
       rows
         .filter(r => r.수출국 === exporter && r.품목 === item && (!importer || importer === "-선택-" || r.수입국 === importer))
@@ -98,31 +97,31 @@ function Tip({ active, payload, label }) {
   );
 }
 
-function GeneralLabel(props) {
-  const { x, y, width, value } = props;
+/** 라벨 컴포넌트(모바일 축소 시 더 작게 표시) */
+function GeneralLabel({ x, y, width, value, fontSize = 12 }) {
   if (value == null) return null;
   const cx = x + width / 2;
-  const cy = y - 6;
+  const cy = y - 4; // 더 붙여서 공간 절약
   return (
-    <text x={cx} y={cy} textAnchor="middle" fill="#ffffff" fontWeight="800" fontSize="12">
+    <text x={cx} y={cy} textAnchor="middle" fill="#ffffff" fontWeight="800" fontSize={fontSize}>
       {value.toFixed(1)}%
     </text>
   );
 }
-function AgreementLabel(props) {
-  const { x, y, width, value, index, viewBox, payload } = props;
+function AgreementLabel({ x, y, width, value, payload, fontSize = 12, gap = 14 }) {
   if (value == null) return null;
   const name = (payload?.agrName || "").trim();
   const cx = x + width / 2;
-  // 위로 2줄을 표시할 공간을 확보
-  const line1y = y - 24;  // 협정명
-  const line2y = y - 8;   // 협정 관세값
+  const line1y = y - (gap + fontSize); // 협정명
+  const line2y = y - 4;                // 협정 관세값
   return (
     <g>
       {name ? (
-        <text x={cx} y={line1y} textAnchor="middle" fill="#5AB0F6" fontWeight="800" fontSize="14">{name}</text>
+        <text x={cx} y={line1y} textAnchor="middle" fill="#5AB0F6" fontWeight="800" fontSize={fontSize}>
+          {name}
+        </text>
       ) : null}
-      <text x={cx} y={line2y} textAnchor="middle" fill="#5AB0F6" fontWeight="800" fontSize="14">
+      <text x={cx} y={line2y} textAnchor="middle" fill="#5AB0F6" fontWeight="800" fontSize={fontSize}>
         {value.toFixed(1)}%
       </text>
     </g>
@@ -131,6 +130,16 @@ function AgreementLabel(props) {
 
 export default function CompareChart({ rows, state }) {
   const data = useMemo(() => buildCompare(rows, state), [rows, state]);
+
+  // 🔎 화면폭 감지로 "축소 모드" 자동 적용
+  const [isCompact, setIsCompact] = useState(false);
+  useEffect(() => {
+    const update = () => setIsCompact(window.innerWidth <= 420); // 420px 이하면 축소
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   if (!data.length) {
     return (
       <div className="card">
@@ -140,37 +149,85 @@ export default function CompareChart({ rows, state }) {
     );
   }
 
-  // 라벨 자리 확보를 위해 Y최대 1.25배
-  const maxVal = Math.max(...data.map(d => Math.max(d.general ?? 0, d.agreement ?? 0, 0)));
-  const yMax = Math.max(10, Math.ceil(maxVal * 1.25));
+  // ⬇️ 축소 모드에서 전반적으로 더 조밀하게
+  const cfg = {
+    height: isCompact ? 300 : 360,
+    perBarWidth: isCompact ? 68 : 100,    
+    xLabelAngle: isCompact ? -20 : -25,
+    xLabelHeight: isCompact ? 56 : 70,
+    fontLabel: isCompact ? 11 : 12,        // 일반막대 라벨
+    fontAgreement: isCompact ? 12 : 14,    // 협정 라벨
+    gapAgreement: isCompact ? 10 : 14,     // 협정 두 줄 간격
+    barSize: isCompact ? 18 : 22,          // 막대 두께 축소
+    barGap: isCompact ? 6 : 8,             // 막대 간격 축소
+    legendFont: isCompact ? 12 : 12
+  };
 
-  // 가로 스크롤폭: 수입국 개수 기준
-  const width = Math.max(520, data.length * 100);
+  // 라벨 자리 확보: 너무 크지 않게 1.20로 상단 여유만 유지
+  const maxVal = Math.max(...data.map(d => Math.max(d.general ?? 0, d.agreement ?? 0, 0)));
+  const yMax = Math.max(10, Math.ceil(maxVal * 1.20));
+
+  // 가로 스크롤 폭
+  const width = Math.max(360, data.length * cfg.perBarWidth);
 
   return (
     <div className="card">
-      <div style={{fontWeight:900, fontSize:16, marginBottom:10}}>📊 수입국별 관세 비교</div>
+      <div style={{
+        display:"flex", justifyContent:"space-between", alignItems:"center",
+        marginBottom:10
+      }}>
+        <div style={{fontWeight:900, fontSize:16}}>📊 수입국별 관세 비교</div>
+        <div className="badge" title={isCompact ? "축소모드(모바일)" : "기본모드"}>
+          {isCompact ? "🔎 축소모드" : "🖥 기본"}
+        </div>
+      </div>
+
       <div style={{overflowX:"auto"}}>
         <div style={{width}}>
-          <ResponsiveContainer width="100%" height={360}>
-            <BarChart data={data} margin={{ top: 20, right: 16, left: 6, bottom: 50 }}>
-              <XAxis dataKey="importer" angle={-25} textAnchor="end" interval={0} height={70} />
-              <YAxis domain={[0, yMax]} tickFormatter={(v)=>`${v}%`} />
+          <ResponsiveContainer width="100%" height={cfg.height}>
+            <BarChart
+              data={data}
+              margin={{ top: 16, right: 12, left: 6, bottom: isCompact ? 40 : 50 }}
+              barSize={cfg.barSize}
+              barGap={cfg.barGap}
+            >
+              <XAxis
+                dataKey="importer"
+                angle={cfg.xLabelAngle}
+                textAnchor="end"
+                interval={0}
+                height={cfg.xLabelHeight}
+                tick={{ fontSize: isCompact ? 11 : 12, fill: "#fff" }}
+              />
+              <YAxis
+                domain={[0, yMax]}
+                tickFormatter={(v)=>`${v}%`}
+                tick={{ fontSize: isCompact ? 11 : 12, fill: "#fff" }}
+              />
               <Tooltip content={<Tip />} />
-              <Legend />
+              <Legend
+                wrapperStyle={{ fontSize: cfg.legendFont }}
+              />
               <Bar dataKey="general" name="일반 관세(%)" fill="#999999" radius={[6,6,0,0]}>
-                <LabelList dataKey="general" content={<GeneralLabel />} />
+                <LabelList
+                  dataKey="general"
+                  content={(props) => <GeneralLabel {...props} fontSize={cfg.fontLabel} />}
+                />
               </Bar>
               <Bar dataKey="agreement" name="협정 관세(%)" fill="#A7D8F9" radius={[6,6,0,0]}>
-                <LabelList dataKey="agreement" content={<AgreementLabel />} />
+                <LabelList
+                  dataKey="agreement"
+                  content={(props) => <AgreementLabel {...props} fontSize={cfg.fontAgreement} gap={cfg.gapAgreement} />}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
+
       <div className="muted" style={{fontSize:12, marginTop:8, lineHeight:1.45}}>
         - 협정 관세는 협정명/값이 있는 경우만 표시됩니다. <br/>
-        - 모바일에서 좌우로 스크롤하여 모든 수입국을 확인할 수 있습니다.
+        - 모바일에서는 축소모드가 자동 적용되고, 좌우 스크롤로 모든 수입국을 확인할 수 있습니다.
       </div>
     </div>
   );
