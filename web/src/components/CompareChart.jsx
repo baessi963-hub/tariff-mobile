@@ -128,8 +128,19 @@ function AgreementLabel({ x, y, width, value, payload, fontSize = 12, gap = 14 }
   );
 }
 
+/** 동적 제목 생성 */
+function buildTitle(state) {
+  const { exporter, item, detail } = state || {};
+  const exporterName = (exporter && exporter !== "-선택-") ? exporter : "수출국 미선택";
+  const target = (detail && detail !== "-선택-")
+    ? detail
+    : ((item && item !== "-선택-") ? item : "품목");
+  return `📊 '${exporterName}'수출국 기준, '${target}' 품목의 수입국별 관세율`;
+}
+
 export default function CompareChart({ rows, state }) {
   const data = useMemo(() => buildCompare(rows, state), [rows, state]);
+  const title = useMemo(() => buildTitle(state), [state]);
 
   // 🔎 화면폭 감지로 "축소 모드" 자동 적용
   const [isCompact, setIsCompact] = useState(false);
@@ -143,7 +154,7 @@ export default function CompareChart({ rows, state }) {
   if (!data.length) {
     return (
       <div className="card">
-        <div style={{fontWeight:900, fontSize:16}}>📊 수입국별 관세 비교</div>
+        <div style={{fontWeight:900, fontSize:16}}>{title}</div>
         <div className="muted" style={{marginTop:8}}>수출국/품목 선택 후 비교 차트가 표시됩니다.</div>
       </div>
     );
@@ -152,7 +163,7 @@ export default function CompareChart({ rows, state }) {
   // ⬇️ 축소 모드에서 전반적으로 더 조밀하게
   const cfg = {
     height: isCompact ? 300 : 360,
-    perBarWidth: isCompact ? 68 : 100,    
+    perBarWidth: isCompact ? 68 : 100,     // 스크롤 폭 감소
     xLabelAngle: isCompact ? -20 : -25,
     xLabelHeight: isCompact ? 56 : 70,
     fontLabel: isCompact ? 11 : 12,        // 일반막대 라벨
@@ -172,13 +183,9 @@ export default function CompareChart({ rows, state }) {
 
   return (
     <div className="card">
-      <div style={{
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        marginBottom:10
-      }}>
-        <div style={{fontWeight:900, fontSize:16}}>📊 수입국별 관세 비교</div>
-        <div className="badge" title={isCompact ? "축소모드(모바일)" : "기본모드"}>
-        </div>
+      {/* 상단 제목 (요청하신 문구) */}
+      <div style={{marginBottom:10}}>
+        <div style={{fontWeight:900, fontSize:16}}>{title}</div>
       </div>
 
       <div style={{overflowX:"auto"}}>
@@ -204,9 +211,7 @@ export default function CompareChart({ rows, state }) {
                 tick={{ fontSize: isCompact ? 11 : 12, fill: "#fff" }}
               />
               <Tooltip content={<Tip />} />
-              <Legend
-                wrapperStyle={{ fontSize: cfg.legendFont }}
-              />
+              <Legend wrapperStyle={{ fontSize: cfg.legendFont }} />
               <Bar dataKey="general" name="일반 관세(%)" fill="#999999" radius={[6,6,0,0]}>
                 <LabelList
                   dataKey="general"
