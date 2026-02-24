@@ -2,7 +2,7 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
   if (!selectedRow) {
     return (
       <div className="card">
-        <div style={{fontWeight:900, fontSize:16}}>✅ 결과</div>
+        <div style={{fontWeight:900, fontSize:15, lineHeight:1}}>✅ 결과</div>
         <div className="muted" style={{marginTop:8}}>
           수출국/수입국/품목(필요 시 세부/재질)을 선택하세요.
         </div>
@@ -14,7 +14,7 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
   return (
     <div className="card">
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", gap:10}}>
-        <div style={{fontWeight:900, fontSize:16}}>✅ 결과</div>
+        <div style={{fontWeight:900, fontSize:15, lineHeight:1}}>✅ 결과</div>
         <div className="badge">{selectionLabel}</div>
       </div>
       <div className="kpis" style={{marginTop:12}}>

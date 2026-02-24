@@ -45,13 +45,11 @@ export default function App() {
     })();
   }, []);
 
-  // KPI용 단일 행 선택
   const selectedRow = useMemo(() => {
     const { exporter, importer, item, detail, material } = state;
     const baseOk = exporter !== PLACEHOLDER && importer !== PLACEHOLDER && item !== PLACEHOLDER;
     if (!baseOk) return null;
 
-    // requireDetail: 실제 데이터 기반
     const detailCandidates = Array.from(new Set(
       rows.filter(r => r.수출국 === exporter && r.수입국 === importer && r.품목 === item)
           .map(r => r.세부품목).filter(Boolean)
@@ -74,7 +72,6 @@ export default function App() {
     return filtered.length ? filtered[0] : null;
   }, [rows, state]);
 
-  // 선택 라벨
   const selectionLabel = useMemo(() => {
     const { exporter, importer, item, detail, material } = state;
     const parts = [];
@@ -91,11 +88,6 @@ export default function App() {
   return (
     <div className="container">
       <Header meta={meta} />
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", margin:"10px 2px"}}>
-        <div className="muted" style={{fontSize:12}}>
-          데이터 파일: <code>datacustoms_logistics_관세전처리.xlsx</code> (정적 제공)
-        </div>
-      </div>
 
       {loading ? (
         <div className="card">⏳ 관세 데이터를 불러오는 중...</div>

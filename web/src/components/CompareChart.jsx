@@ -178,7 +178,6 @@ export default function CompareChart({ rows, state }) {
       }}>
         <div style={{fontWeight:900, fontSize:16}}>📊 수입국별 관세 비교</div>
         <div className="badge" title={isCompact ? "축소모드(모바일)" : "기본모드"}>
-          {isCompact ? "🔎 축소모드" : "🖥 기본"}
         </div>
       </div>
 
