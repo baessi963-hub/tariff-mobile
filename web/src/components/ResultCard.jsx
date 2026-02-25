@@ -39,7 +39,7 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
         </div>
         <div className="kpi">
           <div className="title">HS Code</div>
-
+ 
           <div
             className="value"
             style={{
