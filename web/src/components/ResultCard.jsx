@@ -39,15 +39,26 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
         </div>
         <div className="kpi">
           <div className="title">HS Code</div>
-          <div className="value">{selectedRow.HS || "—"}</div>
+
+          <div
+            className="value"
+            style={{
+              fontSize: 14,           // 기존 22(기본) → 14로 개별 축소
+              whiteSpace: "nowrap",   // 한 줄 유지
+              lineHeight: 1.1,
+            }}
+          >
+            {selectedRow.HS || "—"}
+          </div>
         </div>
+
         <div className="kpi">
           <div className="title">협정 관세율</div>
           <div className="value">{hasAgreementValue ? `${agrPct.toFixed(1)}%` : "—"}</div>
         </div>
         <div className="kpi">
           {/* ✅ 요청: '협정명' → '💡 협정' 으로 라벨 변경 */}
-          <div className="title">💡 협정</div>
+          <div className="title">협정</div>
           <div className="value" style={{ fontSize: 16 }}>{agreementName || "—"}</div>
         </div>
       </div>
@@ -64,14 +75,14 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
           }}
         >
           {/* ✅ 요청: '협정명 :' → '💡 협정' */}
+
           <div style={{ fontWeight: 800, marginBottom: 6 }}>💡 협정</div>
-          <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-            <b>{agreementName}</b>
-            <br />
-            <span className="muted">{agreementDesc}</span>
+          <div style={{ fontSize: 13, lineHeight: 1.5 }} className="muted">
+            {agreementDesc}
           </div>
         </div>
       ) : null}
+
 
       {/* MS 관세 코멘트 (있을 때만) */}
       {selectedRow.MS코멘트 ? (
