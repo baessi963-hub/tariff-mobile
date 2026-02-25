@@ -46,7 +46,8 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
           <div className="value">{hasAgreementValue ? `${agrPct.toFixed(1)}%` : "—"}</div>
         </div>
         <div className="kpi">
-          <div className="title">협정명</div>
+          {/* ✅ 요청: '협정명' → '💡 협정' 으로 라벨 변경 */}
+          <div className="title">💡 협정</div>
           <div className="value" style={{ fontSize: 16 }}>{agreementName || "—"}</div>
         </div>
       </div>
@@ -62,8 +63,11 @@ export default function ResultCard({ selectedRow, selectionLabel }) {
             border: "1px solid rgba(255,255,255,0.10)",
           }}
         >
+          {/* ✅ 요청: '협정명 :' → '💡 협정' */}
+          <div style={{ fontWeight: 800, marginBottom: 6 }}>💡 협정</div>
           <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-            <b>협정명 :</b> {agreementName} <br />
+            <b>{agreementName}</b>
+            <br />
             <span className="muted">{agreementDesc}</span>
           </div>
         </div>
