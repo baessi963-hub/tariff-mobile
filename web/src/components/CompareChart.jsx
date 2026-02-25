@@ -135,7 +135,7 @@ function buildTitle(state) {
   const target = (detail && detail !== "-선택-")
     ? detail
     : ((item && item !== "-선택-") ? item : "품목");
-  return `📊 '${exporterName}'수출국 기준, '${target}' 품목의 수입국별 관세율`;
+  return `📊 '${exporterName}' 수출국 기준, '${target}' 품목의 수입국별 관세율`;
 }
 
 export default function CompareChart({ rows, state }) {
